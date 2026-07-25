@@ -1,0 +1,52 @@
+{
+  "ejercicio": 2025,
+  "etiqueta": "Libros 2025 EJEMPLO SA",
+  "fecha_presentacion": "",
+  "version_legalia": "1.5.7",
+  "sociedad": {
+    "razon_social": "EJEMPLO SOCIEDAD LIMITADA",
+    "cif": "B00000000",
+    "domicilio": "Calle Mayor 1",
+    "municipio": "Madrid",
+    "codigo_postal": "28001",
+    "provincia_ine": "28",
+    "provincia_registro": "MADRID",
+    "telefono": "600000000",
+    "registro_codigo": "28000",
+    "registro_nombre": "REGISTRO MERCANTIL",
+    "tomo": "1",
+    "seccion": "8",
+    "folio": "1",
+    "hoja": "M-0"
+  },
+  "presentante": {
+    "nombre": "NOMBRE",
+    "apellido1": "APELLIDO1",
+    "apellido2": "APELLIDO2",
+    "nif": "00000000T",
+    "domicilio": "Calle Mayor 1",
+    "municipio": "Madrid",
+    "codigo_postal": "28001",
+    "provincia_ine": "28",
+    "telefono": "600000000",
+    "email": "ejemplo@example.com"
+  },
+  "libros": [
+    {
+      "tipo": "diario",
+      "path": "./libros/diario.xlsx",
+      "numero": 1,
+      "apertura": "01012025",
+      "cierre": "31122025",
+      "cierre_anterior": ""
+    },
+    {
+      "tipo": "inventario",
+      "path": "./libros/inventario.pdf",
+      "numero": 1,
+      "apertura": "01012025",
+      "cierre": "31122025",
+      "cierre_anterior": ""
+    }
+  ]
+}
