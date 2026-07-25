@@ -55,6 +55,7 @@ open-legalia-huella pack -c expediente.json -o salida.ZIP
 ## Documentación
 
 - **[Guía de uso completa](docs/GUIA_USO.md)** — flujo anual, formato DATOS.TXT, límites legales/técnicos
+- **[Changelog](CHANGELOG.md)** — historial de versiones
 - **[Ejemplo de config](examples/expediente.example.json)**
 
 ## Prueba del algoritmo
