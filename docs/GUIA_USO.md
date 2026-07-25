@@ -153,6 +153,32 @@ Líneas `CODIGO`+`valor`, CRLF, encoding Latin-1 (tildes).
 | NNN03–05 | Apertura, cierre, cierre anterior (DDMMYYYY) |
 | NNN06 | **Huella** Base64(SHA-256) |
 
+### 5.1 Nombres de fichero en el ZIP (Legalia2 1.5.7)
+
+```text
+{STEM}_{NNN}.{EXT}     p.ej. DIARIO_004.XLSX , INV_CUEN_004.PDF
+ZIP exterior: LL{registro 5 dígitos}{CIF}.ZIP
+```
+
+STEM oficiales (enum de tipos de libro en Legalia2):
+
+`DIARIO`, `INV_CUEN`, `INVENTAR`, `MAYOR`, `SOCIOS`, `ACTASCON`, `ACTASDET`,
+`ACTACODE`, `ACTALCON`, `SOCUNICO`, `BALANCES`, `BAL_SUMS`, `DET_DIA`,
+`FAC_EMIT`, `FAC_RECI`, `IVA`, `MEMORIA`, `PER_GAN`, `ACCIONES`, `OTROS`.
+
+En el config puedes usar claves cortas (`diario`, `inventario`, `actas`,
+`contratos` → `SOCUNICO`) o el STEM en mayúsculas.
+
+Validaciones al empaquetar (como Legalia): tipo desconocido, y
+**mismo tipo + mismo número** dos veces → error.
+
+Límite de tamaño ZIP (catálogo Registradores): **300 MiB** (`BytesMaximosZip`).
+
+### 5.2 Huella (confirmado en binario + ZIP real)
+
+Método interno Legalia2: `ObtenerHuellaFicheroSHA256` + conversión Base64.
+También existe `ObtenerHuellaFicheroMD5` (no es el campo de legalización actual).
+
 ---
 
 ## 6. Limitaciones y honestidad open source

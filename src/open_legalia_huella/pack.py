@@ -37,12 +37,17 @@ def format_missing_libros(missing: list[tuple[int, str, Path]]) -> str:
 
 def pack_zip(exp: Expediente, out_path: str | Path | None = None) -> Path:
     """Genera el ZIP LL{registro}{CIF}.ZIP con libros + DATOS/DESC/NOMBRES."""
+    from .models import BYTES_MAXIMOS_ZIP
+
     out = Path(out_path) if out_path else Path(exp.zip_basename())
     missing = missing_libros(exp)
     if missing:
         raise FileNotFoundError(format_missing_libros(missing))
     if not exp.libros:
         raise ValueError("El expediente no tiene libros (libros[] vacío).")
+    verrors = exp.validate_libros()
+    if verrors:
+        raise ValueError("Validación de libros fallida:\n  " + "\n  ".join(verrors))
 
     datos = build_datos_txt(exp)
     desc = build_desc_txt(exp)
@@ -60,6 +65,15 @@ def pack_zip(exp: Expediente, out_path: str | Path | None = None) -> Path:
         zf.writestr("DATOS.TXT", enc(datos))
         zf.writestr("DESC.TXT", enc(desc))
         zf.writestr("NOMBRES.TXT", enc(nombres))
+
+    size = out.stat().st_size
+    if size > BYTES_MAXIMOS_ZIP:
+        # Mismo techo que VersionesLegalia.xml (BytesMaximosZip=314572800)
+        out.unlink(missing_ok=True)
+        raise ValueError(
+            f"ZIP demasiado grande ({size} bytes > BytesMaximosZip={BYTES_MAXIMOS_ZIP}). "
+            "Reduce el tamaño de los libros."
+        )
 
     return out.resolve()
 

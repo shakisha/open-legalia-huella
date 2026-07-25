@@ -206,3 +206,50 @@ def test_cli_pack_missing_file_no_traceback(tmp_path: Path):
 def test_cli_verify_missing_zip(tmp_path: Path):
     rc = main(["verify", str(tmp_path / "nope.ZIP")])
     assert rc == 1
+
+
+def test_official_stems_and_zip_filename():
+    from open_legalia_huella.models import OFFICIAL_STEMS, Libro, resolve_stem
+
+    assert "DIARIO" in OFFICIAL_STEMS
+    assert "INV_CUEN" in OFFICIAL_STEMS
+    assert "SOCUNICO" in OFFICIAL_STEMS
+    assert resolve_stem("contratos") == "SOCUNICO"  # no CONTRAT inventado
+    assert resolve_stem("actas") == "ACTASCON"
+    lb = Libro(tipo="diario", path="/tmp/x.xlsx", numero=4)
+    assert lb.zip_filename() == "DIARIO_004.XLSX"
+    lb2 = Libro(tipo="INV_CUEN", path="/tmp/y.pdf", numero=4)
+    assert lb2.zip_filename() == "INV_CUEN_004.PDF"
+
+
+def test_tipo_numero_repetido():
+    from open_legalia_huella.models import Expediente, Libro, Presentante, Sociedad
+
+    exp = Expediente(
+        sociedad=Sociedad(
+            razon_social="X",
+            cif="B1",
+            domicilio="c",
+            municipio="m",
+            codigo_postal="1",
+            provincia_ine="28",
+            registro_codigo="28000",
+        ),
+        presentante=Presentante(nombre="A", apellido1="B", nif="1"),
+        libros=[
+            Libro(tipo="diario", path="a.xlsx", numero=1),
+            Libro(tipo="diario", path="b.xlsx", numero=1),
+        ],
+    )
+    errs = exp.validate_libros()
+    assert any("repetido" in e for e in errs)
+
+
+def test_unknown_tipo_raises():
+    from open_legalia_huella.models import Libro, resolve_stem
+    import pytest
+
+    with pytest.raises(ValueError):
+        resolve_stem("no_existe_este_libro")
+    with pytest.raises(ValueError):
+        Libro(tipo="no_existe", path="x.bin", numero=1).zip_filename()
