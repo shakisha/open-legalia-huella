@@ -17,8 +17,11 @@
     "tomo": "1",
     "seccion": "8",
     "folio": "1",
-    "hoja": "M-0"
+    "hoja": "M-0",
+    "irus": "",
+    "otros": ""
   },
+  "tipo_persona": "J",
   "presentante": {
     "nombre": "NOMBRE",
     "apellido1": "APELLIDO1",

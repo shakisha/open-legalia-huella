@@ -94,18 +94,22 @@ def cmd_pack(args: argparse.Namespace) -> int:
 
     out = Path(args.out) if args.out else Path(exp.zip_basename())
     missing = missing_libros(exp)
-    verrors = exp.validate_libros()
+    verrors = exp.validate()
 
     if args.dry_run:
         print(f"ZIP destino: {out}")
         print(f"Ejercicio: {exp.ejercicio}  libros: {len(exp.libros)}")
+        irus = (exp.sociedad.irus or "").strip()
+        print(f"IRUS: {irus if irus else '(vacío)'}")
         for i, lb in enumerate(exp.libros, 1):
             p = Path(lb.path)
             try:
                 zname = lb.zip_filename()
+                dname = lb.display_name()
             except ValueError:
                 zname = "?"
-            print(f"  [{i}] {lb.display_name()}  num={lb.numero}  → {zname}")
+                dname = lb.tipo
+            print(f"  [{i}] NNN01={dname!r}  num={lb.numero}  → {zname}")
             print(f"       fuente: {p}")
             if p.is_file():
                 print(f"       huella={huella_legalia(p)}")
@@ -115,7 +119,7 @@ def cmd_pack(args: argparse.Namespace) -> int:
             _err("el expediente no tiene libros (libros[] vacío).")
             return 1
         if verrors:
-            _err("Validación de libros fallida:\n  " + "\n  ".join(verrors))
+            _err("Validación de expediente fallida:\n  " + "\n  ".join(verrors))
             return 1
         if missing:
             print(file=sys.stderr)
@@ -125,7 +129,7 @@ def cmd_pack(args: argparse.Namespace) -> int:
         return 0
 
     if verrors:
-        _err("Validación de libros fallida:\n  " + "\n  ".join(verrors))
+        _err("Validación de expediente fallida:\n  " + "\n  ".join(verrors))
         return 1
     if missing:
         _err(format_missing_libros(missing))

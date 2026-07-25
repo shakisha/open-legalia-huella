@@ -253,3 +253,87 @@ def test_unknown_tipo_raises():
         resolve_stem("no_existe_este_libro")
     with pytest.raises(ValueError):
         Libro(tipo="no_existe", path="x.bin", numero=1).zip_filename()
+
+
+def test_official_display_names_nnn01():
+    """Descripcion exacta del catálogo TiposLibro de Legalia2 → NNN01."""
+    from open_legalia_huella.book_types import display_name_for
+    from open_legalia_huella.models import Libro
+
+    assert display_name_for("diario") == "Diario"
+    assert display_name_for("inventario") == "Inventario y cuentas anuales"
+    assert display_name_for("bal_sums") == "Balances comprobación (sumas y saldos)"
+    assert display_name_for("per_gan") == "Libro de pérdidas y ganancias"
+    assert display_name_for("actas") == "Libro de actas"
+    assert display_name_for("contratos").startswith("Libro-registro de contratos")
+    assert display_name_for("ACTACODE") == "Libro de detalle de actas del consejo"
+    lb = Libro(tipo="socios", path="x.pdf", numero=1)
+    assert lb.display_name() == "Registro de socios"
+
+
+def test_irus_validation_and_desc():
+    from open_legalia_huella.datos import build_desc_txt, parse_desc_kv
+    from open_legalia_huella.models import (
+        Expediente,
+        Libro,
+        Presentante,
+        Sociedad,
+        validate_irus,
+    )
+
+    assert validate_irus("") is None
+    assert validate_irus("123") is not None
+    assert validate_irus("1234567890123") is None  # 13 dígitos
+    assert validate_irus("123456789012a") is not None
+
+    exp = Expediente(
+        sociedad=Sociedad(
+            razon_social="X SL",
+            cif="B12345678",
+            domicilio="c",
+            municipio="m",
+            codigo_postal="28001",
+            provincia_ine="28",
+            registro_codigo="28000",
+            irus="1234567890123",
+        ),
+        presentante=Presentante(nombre="A", apellido1="B", nif="00000000T"),
+        libros=[Libro(tipo="diario", path="a.xlsx", numero=1)],
+        ejercicio=2025,
+    )
+    desc = build_desc_txt(exp)
+    kv = parse_desc_kv(desc)
+    assert kv["IRUS"] == "1234567890123"
+    assert kv["TipoPersona"] == "J"
+    assert "VersionLegalia2=1.5.7" in desc.replace("\r\n", "\n")
+
+
+def test_datos_nnn01_uses_official_descripcion(tmp_path: Path):
+    from open_legalia_huella.datos import build_datos_txt
+    from open_legalia_huella.models import Expediente, Libro, Presentante, Sociedad
+
+    f = tmp_path / "d.xlsx"
+    f.write_bytes(b"x")
+    exp = Expediente(
+        sociedad=Sociedad(
+            razon_social="X SL",
+            cif="B1",
+            domicilio="c",
+            municipio="m",
+            codigo_postal="1",
+            provincia_ine="28",
+            registro_codigo="28000",
+        ),
+        presentante=Presentante(nombre="A", apellido1="B", nif="1"),
+        libros=[
+            Libro(
+                tipo="actas",
+                path=str(f),
+                numero=1,
+                apertura="01012025",
+                cierre="31122025",
+            )
+        ],
+    )
+    datos = build_datos_txt(exp)
+    assert "00101Libro de actas" in datos.replace("\r\n", "\n")

@@ -34,6 +34,8 @@ open-legalia-huella --help
 
 Python **≥ 3.10**. Sin dependencias obligatorias.
 
+Versión actual: **0.4.0** — catálogo TiposLibro Legalia (textos NNN01 exactos) + IRUS 13 dígitos en DESC.TXT.
+
 ## Uso rápido
 
 ```bash

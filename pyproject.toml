@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-legalia-huella"
-version = "0.3.0"
+version = "0.4.0"
 description = "Huellas digitales y ZIP de legalización de libros mercantiles (estilo Legalia2), multiplataforma"
 readme = "README.md"
 license = { text = "MIT" }

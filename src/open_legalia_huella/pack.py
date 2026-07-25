@@ -45,9 +45,9 @@ def pack_zip(exp: Expediente, out_path: str | Path | None = None) -> Path:
         raise FileNotFoundError(format_missing_libros(missing))
     if not exp.libros:
         raise ValueError("El expediente no tiene libros (libros[] vacío).")
-    verrors = exp.validate_libros()
+    verrors = exp.validate()
     if verrors:
-        raise ValueError("Validación de libros fallida:\n  " + "\n  ".join(verrors))
+        raise ValueError("Validación de expediente fallida:\n  " + "\n  ".join(verrors))
 
     datos = build_datos_txt(exp)
     desc = build_desc_txt(exp)

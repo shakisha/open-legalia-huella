@@ -30,9 +30,20 @@ def _load_raw(path: Path) -> dict[str, Any]:
 
 def load_expediente(path: str | Path) -> Expediente:
     raw = _load_raw(Path(path))
-    soc = Sociedad(**raw["sociedad"])
-    pre = Presentante(**raw["presentante"])
-    libros = [Libro(**lb) for lb in raw.get("libros", [])]
+    soc_raw = dict(raw["sociedad"])
+    # irus puede ir en sociedad.irus o en la raíz del expediente
+    if "irus" not in soc_raw and raw.get("irus"):
+        soc_raw["irus"] = raw["irus"]
+    # filtrar claves desconocidas en nested para no romper con extras
+    import dataclasses
+
+    def _filter(cls, d: dict):
+        names = {f.name for f in dataclasses.fields(cls)}
+        return {k: v for k, v in d.items() if k in names}
+
+    soc = Sociedad(**_filter(Sociedad, soc_raw))
+    pre = Presentante(**_filter(Presentante, dict(raw["presentante"])))
+    libros = [Libro(**_filter(Libro, dict(lb))) for lb in raw.get("libros", [])]
     return Expediente(
         sociedad=soc,
         presentante=pre,
@@ -42,6 +53,7 @@ def load_expediente(path: str | Path) -> Expediente:
         fecha_presentacion=raw.get("fecha_presentacion", ""),
         version_legalia=raw.get("version_legalia", "1.5.7"),
         campo_401=raw.get("campo_401", "NO"),
+        tipo_persona=raw.get("tipo_persona", "J"),
     )
 
 
@@ -66,7 +78,10 @@ def example_config_dict() -> dict[str, Any]:
             "seccion": "8",
             "folio": "1",
             "hoja": "M-0",
+            "irus": "",
+            "otros": "",
         },
+        "tipo_persona": "J",
         "presentante": {
             "nombre": "NOMBRE",
             "apellido1": "APELLIDO1",

@@ -160,25 +160,55 @@ Líneas `CODIGO`+`valor`, CRLF, encoding Latin-1 (tildes).
 ZIP exterior: LL{registro 5 dígitos}{CIF}.ZIP
 ```
 
-STEM oficiales (enum de tipos de libro en Legalia2):
+### 5.2 Catálogo TiposLibro (texto NNN01 exacto)
 
-`DIARIO`, `INV_CUEN`, `INVENTAR`, `MAYOR`, `SOCIOS`, `ACTASCON`, `ACTASDET`,
-`ACTACODE`, `ACTALCON`, `SOCUNICO`, `BALANCES`, `BAL_SUMS`, `DET_DIA`,
-`FAC_EMIT`, `FAC_RECI`, `IVA`, `MEMORIA`, `PER_GAN`, `ACCIONES`, `OTROS`.
+| Código | STEM | Descripción en DATOS (`NNN01`) |
+|-------:|------|--------------------------------|
+| 1 | DIARIO | Diario |
+| 2 | INV_CUEN | Inventario y cuentas anuales |
+| 3 | BAL_SUMS | Balances comprobación (sumas y saldos) |
+| 4 | INVENTAR | Inventario |
+| 5 | BALANCES | Balances |
+| 6 | MEMORIA | Memoria |
+| 7 | MAYOR | Mayor |
+| 8 | PER_GAN | Libro de pérdidas y ganancias |
+| 9 | IVA | IVA |
+| 10 | FAC_EMIT | Facturas emitidas |
+| 11 | FAC_RECI | Facturas recibidas |
+| 12 | DET_DIA | Detalle del diario |
+| 13 | ACCIONES | Registro de acciones nominativas |
+| 14 | SOCIOS | Registro de socios |
+| 15 | OTROS | Otros |
+| 16 | ACTASCON | Libro de actas |
+| 17 | ACTASDET | Libro de detalle de actas |
+| 18 | SOCUNICO | Libro-registro de contratos del socio único con la sociedad unipersonal |
+| 19 | ACTALCON | Libro de actas del consejo |
+| 20 | ACTACODE | Libro de detalle de actas del consejo |
 
-En el config puedes usar claves cortas (`diario`, `inventario`, `actas`,
-`contratos` → `SOCUNICO`) o el STEM en mayúsculas.
+En el config: clave corta (`diario`, `actas`, `contratos`→`SOCUNICO`) o STEM.
 
-Validaciones al empaquetar (como Legalia): tipo desconocido, y
-**mismo tipo + mismo número** dos veces → error.
+Validaciones: tipo desconocido; **mismo STEM + número** dos veces → error.
 
-Límite de tamaño ZIP (catálogo Registradores): **300 MiB** (`BytesMaximosZip`).
+Límite ZIP: **300 MiB** (`BytesMaximosZip`).
 
-### 5.2 Huella (confirmado en binario + ZIP real)
+### 5.3 IRUS (1.5.7)
 
-Método interno Legalia2: `ObtenerHuellaFicheroSHA256` + conversión Base64.
-También existe `ObtenerHuellaFicheroMD5` (no es el campo de legalización actual).
+**IRUS** = Identificador Registral Mercantil (13 dígitos).
 
+- En el config: `sociedad.irus` (opcional).
+- En el ZIP: línea `IRUS=` de **DESC.TXT** (vacío si no se informa).
+- Si se informa y no tiene 13 dígitos → error (`IRUSNoTiene13Digitos` en Legalia).
+
+```json
+"sociedad": {
+  "irus": "1234567890123"
+}
+```
+
+### 5.4 Huella
+
+Método Legalia2: `ObtenerHuellaFicheroSHA256` + Base64 (longitud 44).
+También existe MD5 (legado); no se usa en NNN06.
 ---
 
 ## 6. Limitaciones y honestidad open source

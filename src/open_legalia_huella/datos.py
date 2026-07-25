@@ -21,15 +21,15 @@ def _line(code: str, value: str) -> str:
 def build_datos_txt(exp: Expediente, huellas: dict[int, str] | None = None) -> str:
     """Construye DATOS.TXT (texto Latin-1, líneas lógicas).
 
-    `huellas` opcional: {índice_1based: base64sha256}. Si falta, se calcula
-    desde cada Libro.path.
+    Códigos de campo = constantes k*CodigoCampo de Legalia2 1.5.7.
+    `huellas` opcional: {índice_1based: base64sha256}.
     """
     s = exp.sociedad
     p = exp.presentante
     fecha = exp.fecha_presentacion or _ddmmyyyy_today()
     lines: list[str] = []
 
-    # Sociedad / registro
+    # Sociedad / registro (100–112)
     lines.append(_line("100", s.provincia_registro or s.municipio))
     lines.append(_line("101", fecha))
     lines.append(_line("102", s.razon_social))
@@ -41,10 +41,9 @@ def build_datos_txt(exp: Expediente, huellas: dict[int, str] | None = None) -> s
     if s.telefono:
         lines.append(_line("111", s.telefono))
     if s.registro_codigo:
-        lines.append(_line("112", s.registro_codigo.lstrip("0") and s.registro_codigo or s.registro_codigo))
-        # Keep as provided (3026); ZIP name zero-pads separately
-        lines[-1] = _line("112", s.registro_codigo)
+        lines.append(_line("112", s.registro_codigo))
 
+    # Datos registrales (201–207)
     if s.tomo:
         lines.append(_line("201", s.tomo))
     if s.seccion:
@@ -54,8 +53,10 @@ def build_datos_txt(exp: Expediente, huellas: dict[int, str] | None = None) -> s
     lines.append(_line("205", s.registro_nombre))
     if s.hoja:
         lines.append(_line("206", s.hoja))
+    if s.otros:
+        lines.append(_line("207", s.otros))
 
-    # Presentante
+    # Presentante (301–311)
     lines.append(_line("301", p.nombre))
     lines.append(_line("302", p.apellido1))
     if p.apellido2:
@@ -69,6 +70,8 @@ def build_datos_txt(exp: Expediente, huellas: dict[int, str] | None = None) -> s
         lines.append(_line("307", p.codigo_postal))
     if p.provincia_ine:
         lines.append(_line("308", p.provincia_ine.zfill(2)))
+    if p.fax:
+        lines.append(_line("309", p.fax))
     if p.telefono:
         lines.append(_line("310", p.telefono))
     if p.email:
@@ -77,16 +80,16 @@ def build_datos_txt(exp: Expediente, huellas: dict[int, str] | None = None) -> s
     lines.append(_line("401", exp.campo_401))
     lines.append(_line("501", str(len(exp.libros))))
 
+    # Libros: NNN01…06 — NNN01 = Descripcion exacta del catálogo TiposLibro
     for i, libro in enumerate(exp.libros, start=1):
         idx = f"{i:03d}"
-        h = None
         if huellas and i in huellas:
             h = huellas[i]
         else:
             h = huella_legalia(libro.path)
         cierre_prev = libro.cierre_anterior
         if not cierre_prev and libro.numero == 1:
-            cierre_prev = ""  # Legalia permite vacío en libro 1
+            cierre_prev = ""
         lines.append(_line(f"{idx}01", libro.display_name()))
         lines.append(_line(f"{idx}02", str(libro.numero)))
         lines.append(_line(f"{idx}03", libro.apertura))
@@ -102,7 +105,10 @@ def build_nombres_txt(libros: Iterable[Libro]) -> str:
 
 
 def build_desc_txt(exp: Expediente) -> str:
+    """DESC.TXT — claves kCodigoDato* de Legalia (incl. IRUS desde 1.5.7)."""
     etiqueta = exp.etiqueta or f"Libros {exp.ejercicio}"
+    irus = (exp.sociedad.irus or "").strip()
+    tipo_persona = (exp.tipo_persona or "J").upper()
     lines = [
         etiqueta,
         f"VersionLegalia2={exp.version_legalia}",
@@ -110,8 +116,8 @@ def build_desc_txt(exp: Expediente) -> str:
         f"Ejercicio={exp.ejercicio}",
         "Enviado=",
         f"NombreZip={exp.zip_basename()}",
-        "TipoPersona=J",
-        "IRUS=",
+        f"TipoPersona={tipo_persona}",
+        f"IRUS={irus}",
         "eDocNumeroDocumento=",
         "eDocEntradaTipo=",
         "eDocEntradaSubsanada=",
@@ -149,4 +155,22 @@ def parse_huellas_from_datos(datos: str | bytes) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for k in sorted(hashes.keys()):
         out.append((names.get(k, k), hashes[k]))
+    return out
+
+
+def parse_desc_kv(desc: str | bytes) -> dict[str, str]:
+    """Parsea claves VersionLegalia2=, IRUS=, etc. de DESC.TXT."""
+    if isinstance(desc, bytes):
+        text = desc.decode("latin-1", errors="replace")
+    else:
+        text = desc
+    out: dict[str, str] = {}
+    for i, line in enumerate(text.splitlines()):
+        line = line.strip("\r")
+        if i == 0:
+            out["_etiqueta"] = line
+            continue
+        if "=" in line:
+            k, _, v = line.partition("=")
+            out[k.strip()] = v.strip()
     return out
